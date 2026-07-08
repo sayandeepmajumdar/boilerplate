@@ -103,7 +103,7 @@ require_cmd() {
 }
 
 require_cmd node "install from https://nodejs.org, v20+"
-require_cmd pnpm "install from https://pnpm.io/installation"
+require_cmd npm "install Node.js from https://nodejs.org; npm should be bundled with it"
 require_cmd docker "install Docker Desktop (or the Docker Engine) from https://docs.docker.com/get-docker/"
 require_cmd curl "should ship with your OS — install curl"
 
@@ -111,6 +111,15 @@ NODE_MAJOR="$(node -e 'process.stdout.write(String(process.versions.node.split("
 if [ "$NODE_MAJOR" -lt 20 ]; then
   fail "Node.js $NODE_MAJOR found — this project needs Node 20+ (nvm install 20 or use nvm use)."
 fi
+
+if npm i -g pnpm > "$LOG_DIR/pnpm-install.log" 2>&1; then
+  log_ok "pnpm installed/updated globally"
+else
+  tail -n 40 "$LOG_DIR/pnpm-install.log" >&2
+  fail "npm i -g pnpm failed — see $LOG_DIR/pnpm-install.log for the full log"
+fi
+
+require_cmd pnpm "install from https://pnpm.io/installation"
 log_ok "node $(node -v), pnpm $(pnpm -v)"
 
 if ! docker compose version >/dev/null 2>&1; then

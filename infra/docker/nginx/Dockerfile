@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 FROM node:26-alpine AS web-build
-RUN corepack enable && corepack prepare pnpm@11.8.0 --activate
+RUN npm i -g pnpm@11.8.0
 WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile

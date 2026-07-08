@@ -4,7 +4,7 @@
 # because this is a pnpm workspace — apps/api's lockfile lives at the root.
 
 FROM node:26-alpine AS base
-RUN corepack enable && corepack prepare pnpm@11.8.0 --activate
+RUN npm i -g pnpm@11.8.0
 WORKDIR /repo
 
 FROM base AS build
