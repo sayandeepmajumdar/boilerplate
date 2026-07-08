@@ -2,6 +2,12 @@
 
 [![CI](https://github.com/sumitkar-in/boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/sumitkar-in/boilerplate/actions/workflows/ci.yml)
 [![Security](https://github.com/sumitkar-in/boilerplate/actions/workflows/weekly-security.yml/badge.svg)](https://github.com/sumitkar-in/boilerplate/actions/workflows/weekly-security.yml)
+[![CodeQL](https://github.com/sumitkar-in/boilerplate/actions/workflows/codeql.yml/badge.svg)](https://github.com/sumitkar-in/boilerplate/actions/workflows/codeql.yml)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
+![TypeScript](https://img.shields.io/badge/typescript-passing-brightgreen)
+![pnpm](https://img.shields.io/badge/pnpm-11-orange)
+![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue)
 
 A robust, modular, multi-tenant boilerplate designed to accelerate scalable software development. Features a high-performance **NestJS REST API**, a **React + Vite** web application, and a cross-platform **React Native / Expo** mobile application — all wired together in a pnpm monorepo.
 
