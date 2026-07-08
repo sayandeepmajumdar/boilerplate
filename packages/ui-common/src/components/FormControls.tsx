@@ -208,3 +208,155 @@ export const Checkbox: React.FC<CheckboxProps> = ({ label, className = '', id, .
     </label>
   );
 };
+
+export interface PillsInputProps {
+  label?: string;
+  error?: string;
+  helperText?: string;
+  value: string[];
+  onChange: (value: string[]) => void;
+  placeholder?: string;
+  id?: string;
+  className?: string;
+  disabled?: boolean;
+}
+
+export const PillsInput: React.FC<PillsInputProps> = ({
+  label,
+  error,
+  helperText,
+  value = [],
+  onChange,
+  placeholder,
+  id,
+  className = '',
+  disabled,
+}) => {
+  const inputId = id || (label ? `pills-input-${label.replace(/\s+/g, '-').toLowerCase()}` : undefined);
+  const [inputValue, setInputValue] = React.useState('');
+  const [deleteSpaces, setDeleteSpaces] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const addPill = (text: string) => {
+    let cleanText = text;
+    if (deleteSpaces) {
+      cleanText = cleanText.replace(/\s+/g, '');
+    }
+    cleanText = cleanText.trim();
+    
+    const parts = cleanText
+      .split(',')
+      .map((p) => (deleteSpaces ? p.replace(/\s+/g, '') : p).trim())
+      .filter((p) => p.length > 0);
+
+    if (parts.length === 0) return;
+
+    const newPills = [...value];
+    let changed = false;
+    for (const part of parts) {
+      if (!newPills.includes(part)) {
+        newPills.push(part);
+        changed = true;
+      }
+    }
+    if (changed) {
+      onChange(newPills);
+    }
+    setInputValue('');
+  };
+
+  const removePill = (indexToRemove: number) => {
+    onChange(value.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addPill(inputValue);
+    } else if (e.key === ',' || e.key === 'Comma') {
+      e.preventDefault();
+      addPill(inputValue);
+    } else if (e.key === 'Backspace' && inputValue === '' && value.length > 0) {
+      removePill(value.length - 1);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val.endsWith(',')) {
+      addPill(val.slice(0, -1));
+    } else {
+      setInputValue(deleteSpaces ? val.replace(/\s+/g, '') : val);
+    }
+  };
+
+  const handleBlur = () => {
+    if (inputValue.trim()) {
+      addPill(inputValue);
+    }
+  };
+
+  return (
+    <div className={`ui-field ui-pills-input ${className}`.trim()}>
+      {label && (
+        <label htmlFor={inputId}>
+          {label}
+        </label>
+      )}
+      <div 
+        className={`ui-pills-input__container ${error ? 'ui-input--error' : ''} ${disabled ? 'ui-pills-input__container--disabled' : ''}`.trim()}
+        onClick={() => inputRef.current?.focus()}
+      >
+        {value.map((pill, index) => (
+          <span key={`${pill}-${index}`} className="ui-pill">
+            <span className="ui-pill__text">{pill}</span>
+            {!disabled && (
+              <button
+                type="button"
+                className="ui-pill__remove"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removePill(index);
+                }}
+                aria-label={`Remove ${pill}`}
+              >
+                &times;
+              </button>
+            )}
+          </span>
+        ))}
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          placeholder={value.length === 0 ? placeholder : ''}
+          disabled={disabled}
+        />
+      </div>
+      <div className="ui-pills-input__footer">
+        <div className="ui-pills-input__footer-left">
+          {error && <span className="ui-field__error">{error}</span>}
+          {!error && helperText && <span className="ui-field__hint">{helperText}</span>}
+        </div>
+        <label className="ui-pills-input__delete-spaces">
+          <input
+            type="checkbox"
+            checked={deleteSpaces}
+            onChange={(e) => {
+              setDeleteSpaces(e.target.checked);
+              if (e.target.checked && inputValue) {
+                setInputValue(inputValue.replace(/\s+/g, ''));
+              }
+            }}
+            disabled={disabled}
+          />
+          <span>Delete spaces</span>
+        </label>
+      </div>
+    </div>
+  );
+};

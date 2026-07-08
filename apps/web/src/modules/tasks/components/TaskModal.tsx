@@ -1,5 +1,5 @@
 import { Settings2 } from 'lucide-react';
-import { Button, Input, Modal, SearchableSelect, Select, Textarea } from '@boilerplate/ui-common';
+import { Button, Input, Modal, SearchableSelect, Select, Textarea, PillsInput } from '@boilerplate/ui-common';
 import type { Employee } from '../../employees/api';
 import {
   type TaskCustomField,
@@ -49,7 +49,7 @@ export function TaskModal(props: {
         <TaskMultiSelect title="Assignees" employees={props.employees} selected={props.form.assigneeIds ?? []} onChange={(ids) => props.onForm({ ...props.form, assigneeIds: ids, primaryAssigneeId: props.form.primaryAssigneeId ?? ids[0] ?? null })} />
         <SearchableSelect label="Primary assignee" value={props.form.primaryAssigneeId ?? ''} options={[{ value: '', label: 'Unassigned' }, ...employeeOptions]} onValueChange={(value) => props.onForm({ ...props.form, primaryAssigneeId: value || null })} />
         <TaskMultiSelect title="Watchers" employees={props.employees} selected={props.form.watcherIds ?? []} onChange={(ids) => props.onForm({ ...props.form, watcherIds: ids })} />
-        <Input label="Labels" value={(props.form.labels ?? []).join(', ')} onChange={(event) => props.onForm({ ...props.form, labels: event.target.value.split(',').map((item) => item.trim()).filter(Boolean) })} placeholder="frontend, blocked, Q3" />
+        <PillsInput label="Labels" value={props.form.labels ?? []} onChange={(labels) => props.onForm({ ...props.form, labels })} placeholder="frontend, blocked, Q3" />
         <Input label="Due date" type="datetime-local" value={toDatetimeLocal(props.form.dueDate)} onChange={(event) => props.onForm({ ...props.form, dueDate: event.target.value || null })} />
         {projectCustomFields.length > 0 && (
           <div className="task-custom-fields">

@@ -45,6 +45,106 @@ export function RichTextEditor({
     emitChange();
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key === ' ') {
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const node = selection.focusNode;
+        if (node && node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent || '';
+          const offset = selection.focusOffset;
+          const beforeCaret = text.slice(0, offset);
+
+          if (beforeCaret === '#') {
+            e.preventDefault();
+            document.execCommand('formatBlock', false, 'h1');
+            node.textContent = text.slice(offset);
+            emitChange();
+            return;
+          }
+          if (beforeCaret === '##') {
+            e.preventDefault();
+            document.execCommand('formatBlock', false, 'h2');
+            node.textContent = text.slice(offset);
+            emitChange();
+            return;
+          }
+          if (beforeCaret === '###') {
+            e.preventDefault();
+            document.execCommand('formatBlock', false, 'h3');
+            node.textContent = text.slice(offset);
+            emitChange();
+            return;
+          }
+          if (beforeCaret === '>') {
+            e.preventDefault();
+            document.execCommand('formatBlock', false, 'blockquote');
+            node.textContent = text.slice(offset);
+            emitChange();
+            return;
+          }
+          if (beforeCaret === '-') {
+            e.preventDefault();
+            document.execCommand('insertUnorderedList', false);
+            node.textContent = text.slice(offset);
+            emitChange();
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  function handleInput() {
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const node = selection.focusNode;
+      if (node && node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent || '';
+        const patterns = [
+          { regex: /\*\*([^*]+)\*\*/, tag: 'strong' },
+          { regex: /__([^_]+)__/, tag: 'strong' },
+          { regex: /\*([^*]+)\*/, tag: 'em' },
+          { regex: /_([^_]+)_/, tag: 'em' },
+          { regex: /`([^`]+)`/, tag: 'code' },
+        ];
+
+        for (const pattern of patterns) {
+          const match = text.match(pattern.regex);
+          if (match && match.index !== undefined) {
+            const matchedText = match[0];
+            const innerText = match[1];
+            const matchIndex = match.index;
+
+            const beforeText = text.slice(0, matchIndex);
+            const afterText = text.slice(matchIndex + matchedText.length);
+
+            const parent = node.parentNode;
+            if (parent) {
+              const beforeNode = document.createTextNode(beforeText);
+              const formattedElement = document.createElement(pattern.tag);
+              formattedElement.textContent = innerText;
+              const afterNode = document.createTextNode(afterText || '\u200B');
+
+              parent.insertBefore(beforeNode, node);
+              parent.insertBefore(formattedElement, node);
+              parent.insertBefore(afterNode, node);
+              parent.removeChild(node);
+
+              const newRange = document.createRange();
+              newRange.setStart(afterNode, afterText ? 0 : 1);
+              newRange.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(newRange);
+              break;
+            }
+          }
+        }
+      }
+    }
+    emitChange();
+  }
+
   return (
     <div className="documents-rich-editor">
       <div className="documents-rich-editor__toolbar" aria-label="Formatting">
@@ -63,7 +163,8 @@ export function RichTextEditor({
         className="documents-rich-editor__input"
         contentEditable
         data-placeholder={placeholder}
-        onInput={emitChange}
+        onInput={handleInput}
+        onKeyDown={handleKeyDown}
         role="textbox"
         aria-multiline="true"
         suppressContentEditableWarning

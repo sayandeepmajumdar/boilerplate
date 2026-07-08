@@ -6831,3 +6831,131 @@ input[type='checkbox'] {
 .roles-settings-body {
   padding: 20px !important;
 }
+
+/* PillsInput component styling */
+.ui-pills-input__container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: text;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ui-pills-input__container:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+  outline: none;
+}
+
+.ui-pills-input__container--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ui-pills-input__container input {
+  flex: 1;
+  min-width: 80px;
+  border: none !important;
+  background: transparent !important;
+  padding: 2px 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+}
+
+.ui-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 8px 0 10px;
+  border-radius: 4px;
+  background: var(--view-header, rgb(15 23 42 / 6%));
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ui-pill__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 0;
+  line-height: 1;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.ui-pill__remove:hover {
+  background-color: var(--border);
+  color: var(--text);
+}
+
+.ui-pills-input__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.ui-pills-input__footer-left {
+  flex: 1;
+}
+
+.ui-pills-input__delete-spaces {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+}
+
+.ui-pills-input__delete-spaces input {
+  cursor: pointer;
+}
+
+.notes-inline-panel-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notes-delete-spaces {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+
+.notes-delete-spaces input {
+  cursor: pointer;
+}
+
+

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Clock3, Edit3, FileText, MessageSquare, Plus, Save, X } from 'lucide-react';
 import { Button, useToast } from '@boilerplate/ui-common';
 import {
@@ -19,15 +20,16 @@ import { DocumentEditor } from '../components/DocumentEditor';
 import { DocumentInspectorPanel, type InspectorPanel } from '../components/DocumentInspectorPanel';
 import { DocumentReader } from '../components/DocumentReader';
 import { DocumentsSidebar } from '../components/DocumentsSidebar';
+import { markdownToHtml } from '../lib/markdown';
 
 const EMPTY_SPACE: SpaceForm = { key: '', name: '', description: '' };
 
 export function DocumentsPage() {
   const { showToast } = useToast();
+  const { spaceKey, pageSlug } = useParams();
+  const navigate = useNavigate();
   const [spaces, setSpaces] = useState<DocSpace[]>([]);
   const [pages, setPages] = useState<DocumentPage[]>([]);
-  const [selectedSpaceId, setSelectedSpaceId] = useState('');
-  const [selectedPageId, setSelectedPageId] = useState('');
   const [detail, setDetail] = useState<DocumentDetail | null>(null);
   const [draft, setDraft] = useState<DocumentDetail | null>(null);
   const [search, setSearch] = useState('');
@@ -39,7 +41,12 @@ export function DocumentsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [comment, setComment] = useState('');
 
-  const selectedSpace = spaces.find((space) => space.id === selectedSpaceId);
+  // Derived state from URL parameters
+  const selectedSpace = spaces.find((s) => s.key === spaceKey || s.id === spaceKey) || spaces[0];
+  const selectedSpaceId = selectedSpace?.id || '';
+
+  const selectedPage = pages.find((p) => p.slug === pageSlug || p.id === pageSlug) || pages[0];
+  const selectedPageId = selectedPage?.id || '';
 
   const loadPages = useCallback(async () => {
     if (!selectedSpaceId) {
@@ -52,21 +59,38 @@ export function DocumentsPage() {
       label: label.trim() || undefined,
     });
     setPages(result.rows);
-    setSelectedPageId((current) => current || result.rows[0]?.id || '');
   }, [label, search, selectedSpaceId]);
 
+  // Initial spaces list load
   useEffect(() => {
     let cancelled = false;
     listSpaces().then((result) => {
       if (cancelled) return;
       setSpaces(result);
-      setSelectedSpaceId((current) => current || result[0]?.id || '');
     });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  // Redirect to first space / page if not specified in URL
+  useEffect(() => {
+    if (spaces.length === 0) return;
+
+    if (!spaceKey) {
+      navigate(`/documents/${spaces[0].key}`, { replace: true });
+      return;
+    }
+
+    if (selectedSpaceId && pages.length > 0 && !pageSlug) {
+      const space = spaces.find((s) => s.id === selectedSpaceId);
+      if (space && pages[0]) {
+        navigate(`/documents/${space.key}/${pages[0].slug}`, { replace: true });
+      }
+    }
+  }, [spaceKey, pageSlug, spaces, pages, selectedSpaceId, navigate]);
+
+  // Load pages when selected space, search query, or label filters change
   useEffect(() => {
     if (!selectedSpaceId) {
       void Promise.resolve().then(() => setPages([]));
@@ -80,13 +104,13 @@ export function DocumentsPage() {
     }).then((result) => {
       if (cancelled) return;
       setPages(result.rows);
-      setSelectedPageId((current) => current || result.rows[0]?.id || '');
     });
     return () => {
       cancelled = true;
     };
   }, [label, search, selectedSpaceId]);
 
+  // Load page detail when selected page ID changes
   useEffect(() => {
     if (!selectedPageId) {
       void Promise.resolve().then(() => {
@@ -98,24 +122,35 @@ export function DocumentsPage() {
       return;
     }
 
-    getPage(selectedPageId).then((page) => {
-      setDetail(page);
-      setDraft(page);
-      setIsEditing(false);
-      setActivePanel(null);
-    }, () => {
-      setDetail(null);
-      setDraft(null);
-      setIsEditing(false);
-      setActivePanel(null);
-    });
+    getPage(selectedPageId).then(
+      (page) => {
+        // Automatically convert markdown to HTML and format to rich_text on load
+        let content = page.content;
+        let format = page.format;
+        if (format === 'markdown') {
+          content = markdownToHtml(content);
+          format = 'rich_text';
+        }
+        const updatedPage = { ...page, format, content };
+        setDetail(updatedPage);
+        setDraft(updatedPage);
+        setIsEditing(false);
+        setActivePanel(null);
+      },
+      () => {
+        setDetail(null);
+        setDraft(null);
+        setIsEditing(false);
+        setActivePanel(null);
+      },
+    );
   }, [selectedPageId]);
 
   async function saveSpace() {
     try {
       const space = await createSpace(spaceForm);
       setSpaces((current) => [...current, space]);
-      setSelectedSpaceId(space.id);
+      navigate(`/documents/${space.key}`);
       setSpaceForm(EMPTY_SPACE);
       setIsSpaceModalOpen(false);
     } catch (err) {
@@ -137,7 +172,10 @@ export function DocumentsPage() {
         content: '',
       });
       setPages((current) => [...current, page]);
-      setSelectedPageId(page.id);
+      const space = spaces.find((s) => s.id === selectedSpaceId);
+      if (space) {
+        navigate(`/documents/${space.key}/${page.slug}`);
+      }
       setIsEditing(true);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Could not create page', 'error');
@@ -161,6 +199,10 @@ export function DocumentsPage() {
       setDetail(updated);
       setDraft(updated);
       setIsEditing(false);
+      const space = spaces.find((s) => s.id === selectedSpaceId);
+      if (space) {
+        navigate(`/documents/${space.key}/${page.slug}`, { replace: true });
+      }
       showToast('Page saved', 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Could not save page', 'error');
@@ -197,10 +239,18 @@ export function DocumentsPage() {
   }
 
   function selectSpace(spaceId: string) {
-    setSelectedSpaceId(spaceId);
-    setSelectedPageId('');
-    setIsEditing(false);
-    setActivePanel(null);
+    const space = spaces.find((s) => s.id === spaceId);
+    if (space) {
+      navigate(`/documents/${space.key}`);
+    }
+  }
+
+  function selectPage(pageId: string) {
+    const page = pages.find((p) => p.id === pageId);
+    const space = spaces.find((s) => s.id === selectedSpaceId);
+    if (page && space) {
+      navigate(`/documents/${space.key}/${page.slug}`);
+    }
   }
 
   function startEditing() {
@@ -224,7 +274,7 @@ export function DocumentsPage() {
         onCreateSpace={() => setIsSpaceModalOpen(true)}
         pages={pages}
         selectedPageId={selectedPageId}
-        onSelectPage={setSelectedPageId}
+        onSelectPage={selectPage}
         onCreatePage={(parentId) => void createChildPage(parentId)}
         search={search}
         onSearchChange={setSearch}

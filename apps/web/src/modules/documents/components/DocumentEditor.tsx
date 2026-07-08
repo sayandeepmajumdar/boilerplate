@@ -1,5 +1,5 @@
-import { Input, Select } from '@boilerplate/ui-common';
-import type { DocumentDetail, DocumentFormat } from '../api';
+import { Input, PillsInput } from '@boilerplate/ui-common';
+import type { DocumentDetail } from '../api';
 import { RichTextEditor } from './RichTextEditor';
 
 export function DocumentEditor({ draft, onChange }: {
@@ -15,34 +15,19 @@ export function DocumentEditor({ draft, onChange }: {
         placeholder="Untitled"
       />
       <div className="documents-editor__row">
-        <Select
-          label="Format"
-          value={draft.format}
-          options={[{ value: 'markdown', label: 'Markdown' }, { value: 'rich_text', label: 'Rich text' }]}
-          onChange={(event) => onChange({ ...draft, format: event.target.value as DocumentFormat })}
-        />
-        <Input
+        <PillsInput
           label="Labels"
-          value={draft.labels.join(', ')}
-          onChange={(event) => onChange({ ...draft, labels: event.target.value.split(',').map((item) => item.trim()).filter(Boolean) })}
+          value={draft.labels}
+          onChange={(labels) => onChange({ ...draft, labels })}
           placeholder="policy, onboarding"
         />
       </div>
-      {draft.format === 'rich_text' ? (
-        <RichTextEditor
-          key={draft.id}
-          initialValue={draft.content}
-          onChange={(html) => onChange({ ...draft, content: html })}
-          placeholder="Start writing..."
-        />
-      ) : (
-        <textarea
-          className="documents-markdown-editor"
-          value={draft.content}
-          onChange={(event) => onChange({ ...draft, content: event.target.value })}
-          placeholder="Type / for ideas, use Markdown headings, lists, and code."
-        />
-      )}
+      <RichTextEditor
+        key={draft.id}
+        initialValue={draft.content}
+        onChange={(html) => onChange({ ...draft, content: html })}
+        placeholder="Start writing..."
+      />
     </section>
   );
 }

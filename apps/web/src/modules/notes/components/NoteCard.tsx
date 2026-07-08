@@ -40,13 +40,18 @@ export function NoteCard({
   const status = note.status;
   const labels = note.labels;
   const [labelDraft, setLabelDraft] = useState('');
+  const [deleteSpaces, setDeleteSpaces] = useState(false);
   const [showLabels, setShowLabels] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
 
-  function addLabel() {
-    const label = labelDraft.trim();
-    if (!label || labels.includes(label)) return;
-    onPatchNote(note.id, { labels: [...labels, label] });
+  function addLabel(text?: string) {
+    let cleanText = text !== undefined ? text : labelDraft;
+    if (deleteSpaces) {
+      cleanText = cleanText.replace(/\s+/g, '');
+    }
+    cleanText = cleanText.trim();
+    if (!cleanText || labels.includes(cleanText)) return;
+    onPatchNote(note.id, { labels: [...labels, cleanText] });
     setLabelDraft('');
   }
 
@@ -93,18 +98,43 @@ export function NoteCard({
       )}
 
       {showLabels && (
-        <div className="notes-inline-panel">
-          <input
-            value={labelDraft}
-            onChange={(event) => setLabelDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') addLabel();
-            }}
-            placeholder={t('notes.labelPlaceholder')}
-          />
-          <button type="button" onClick={addLabel} title={t('notes.addLabel')}>
-            <Check size={14} />
-          </button>
+        <div className="notes-inline-panel-container">
+          <div className="notes-inline-panel">
+            <input
+              value={labelDraft}
+              onChange={(event) => {
+                const val = event.target.value;
+                if (val.endsWith(',')) {
+                  addLabel(val.slice(0, -1));
+                } else {
+                  setLabelDraft(deleteSpaces ? val.replace(/\s+/g, '') : val);
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ',' || event.key === 'Comma') {
+                  event.preventDefault();
+                  addLabel();
+                }
+              }}
+              placeholder={t('notes.labelPlaceholder')}
+            />
+            <button type="button" onClick={() => addLabel()} title={t('notes.addLabel')}>
+              <Check size={14} />
+            </button>
+          </div>
+          <label className="notes-delete-spaces">
+            <input
+              type="checkbox"
+              checked={deleteSpaces}
+              onChange={(e) => {
+                setDeleteSpaces(e.target.checked);
+                if (e.target.checked && labelDraft) {
+                  setLabelDraft(labelDraft.replace(/\s+/g, ''));
+                }
+              }}
+            />
+            <span>Delete spaces</span>
+          </label>
         </div>
       )}
 
